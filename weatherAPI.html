@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+        body {
+            background-color: #000;
+            font-family: Arial, sans-serif;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            color: #000;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .input-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px;
+            width: 200px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #weather-info {
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .error-message {
+            color: red;
+        }
+        .loader {
+            display: none;
+            margin: 10px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007BFF;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Weather App</h1>
+        <div class="input-container">
+            <input type="text" id="city-input" placeholder="Enter city name" aria-label="City name">
+            <button id="get-weather-btn" aria-label="Get weather information">Get Weather</button>
+        </div>
+        <div class="loader" id="loader"></div>
+        <div id="weather-info" class="hidden">
+            <h2 id="city-name"></h2>
+            <p id="temperature"></p>
+            <p id="description"></p>
+        </div>
+        <p id="error-text" class="hidden error-message">City not found. Please try again.</p>
+    </div>
+
+
+<script>
+  const API_KEY = "f1a3b4b1237d6c417495f8c03da25ace";
+  const LOADER_DELAY = 500;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const getWeatherBtn = document.getElementById("get-weather-btn");
+    const cityInput = document.getElementById("city-input");
+    const weatherInfo = document.getElementById("weather-info");
+    const loader = document.getElementById("loader");
+    const errorText = document.getElementById("error-text");
+    const cityNameDisplay = document.getElementById("city-name");
+    const temperatureDisplay = document.getElementById("temperature");
+    const descriptionDisplay = document.getElementById("description");
+
+    getWeatherBtn.addEventListener("click", fetchWeather);
+    cityInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") fetchWeather();
+    });
+
+    async function fetchWeather() {
+      const city = cityInput.value.trim();
+      if (!city) return;
+
+      loader.style.display = "block";
+      weatherInfo.classList.add("hidden");
+      errorText.classList.add("hidden");
+
+      try {
+        const weatherData = await fetchWeatherData(city);
+        displayWeatherInfo(weatherData);
+      } catch (error) {
+        showError(error);
+      } finally {
+        loader.style.display = "none";
+      }
+    }
+
+    async function fetchWeatherData(city) {
+      try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error("City not found. Please try again.");
+        }
+        return await response.json();
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }
+
+    function displayWeatherInfo(data) {
+      const { name, main, weather } = data;
+      cityNameDisplay.textContent = name;
+      temperatureDisplay.textContent = `Temperature: ${main.temp}°C`;
+      descriptionDisplay.textContent = `Weather: ${weather[0].description}`;
+      weatherInfo.classList.remove("hidden");
+      errorText.classList.add("hidden");
+
+      const weatherCondition = weather[0].main.toLowerCase();
+      document.body.style.backgroundImage = `url('images/${weatherCondition}.jpg')`;
+    }
+
+    function showError(error) {
+      errorText.textContent = error.message;
+      errorText.classList.remove("hidden");
+      weatherInfo.classList.add("hidden");
+    }
+  });
+</script>
+</body>
+</html>
